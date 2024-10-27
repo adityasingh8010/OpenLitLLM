@@ -463,6 +463,7 @@ class GradioChatApp:
         """
         Gradio app defined here
         """
+
         # Close all apps running on servers
         gr.close_all()
         textbox = gr.Textbox(lines=2, show_label=False, placeholder="Enter the abstract of your paper", container=False)
@@ -503,13 +504,13 @@ class GradioChatApp:
 
                     with gr.Accordion("Ranking Parameters", open=False) as parameter_row:
                         # https://platform.openai.com/docs/models/overview
-                        model_name = gr.Dropdown(["llama3.1"], value="llama3.1", interactive=True,  label="Model") # scale=1, min_width=0
-                        num_papers = gr.Slider(minimum=1, maximum=10, value=4, step=1, interactive=True, label="Cite # papers")
+                        model_name = gr.Dropdown(["llama3.1","llama3.2:1b","llama3.2"], value="llama3.1", interactive=True,  label="Model") # scale=1, min_width=0
+                        num_papers = gr.Slider(minimum=1, maximum=20, value=8, step=1, interactive=True, label="Cite # papers")
                         sort_by = gr.Dropdown(["Relevance", "Citations", "Year"], value="Relevance", interactive=True,  label="Sort by") # scale=1, min_width=0
                         llm_rerank = gr.Radio(choices=["True", "False"], value="True", interactive=True, label="LLM Re-rank (May override sorting)")
                         with gr.Row():
                             temperature = gr.Slider(minimum=0.0, maximum=1.0, value=0.2, step=0.1, interactive=True, label="Temperature", scale=1)
-                            max_tokens = gr.Slider(minimum=0, maximum=3000, value=500, step=64, interactive=True, label="Max output tokens", scale=2)
+                            max_tokens = gr.Slider(minimum=0, maximum=3000, value=1024, step=64, interactive=True, label="Max output tokens", scale=2)
                     display_1 = gr.Markdown(value=f"Retrieved papers", label="Retrieved papers!", elem_id="display_mrkdwn") #, visible=True)
                     # with gr.Accordion("Generation Parameters", open=False) as parameter_row:
                         # top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.7, step=0.1, interactive=True, label="Top P")
@@ -610,6 +611,10 @@ class GradioChatApp:
             #     self.bot, chatbot, chatbot
             # )
             # clear_btn.click(lambda: None, None, chatbot, queue=False)
+
+        # demo = gr.Interface(fn=get_model_info,inputs=model_name)
+
+
 
         demo.launch(allowed_paths=["resources/"])
 
