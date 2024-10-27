@@ -81,7 +81,7 @@ custom_html = "<div style='text-align: left;'>Examples:</div>"
 
 title_markdown = ("""
 <h1 align="center"><a href=""><img src="/file=resources/download.png", alt="Writing Assistant - LitCraft" border="0" style="margin: 0 auto; height: 50px;" /></a> </h1>
-<h2 align="center">🔥 LitLLM: A Toolkit for Scientific Literature Review</h2>
+<h2 align="center">🔥 OpenLitLLM: A Toolkit for Scientific Literature Review</h2>
 """)
 # <h5 align="center"> If you like our project, please give us a star ✨ on Github for latest update.  </h2>
 
@@ -177,7 +177,7 @@ def run_open_ai_api(json_data, model_name="llama3.1", max_tokens: int = 500, tem
     :param json_data:
     :return:
     """
-    print("this ran")
+    #print("this ran")
     completion = client.chat.completions.create(
         model=model_name,
         max_tokens=max_tokens,
@@ -448,7 +448,6 @@ class GradioChatApp:
         #     history.pop()
         # print(complete_prompt)
         json_data = {"prompt": complete_prompt}
-        print("I was here")
         response = run_open_ai_api(json_data, model_name=model_name, max_tokens=max_tokens, temperature=temperature)
 
         history[-1][1] = ""
