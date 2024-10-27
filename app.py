@@ -14,15 +14,21 @@ import os
 import re
 import argparse
 import requests
-import openai
+from openai import OpenAI
 from typing import Any
 import datetime
 import pandas as pd
 from evaluate import load
+import ollama
 
 # Set openai credentials
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# openai.api_key = os.environ.get("OPENAI_API_KEY")
 S2_API_KEY = os.getenv('S2_API_KEY')
+
+client = OpenAI(
+    base_url = 'http://localhost:11434/v1',
+    api_key='ollama', # required, but unused
+)
 
 # Function to set the OpenAI API key
 def set_apikey(api_key):
@@ -164,15 +170,15 @@ def load_all_prompts(file_path: str = None) -> str:
     return prompts
 
 
-def run_open_ai_api(json_data, model_name="gpt-4", max_tokens: int = 500, temperature: float = 0.2) -> str:
+def run_open_ai_api(json_data, model_name="llama3.1", max_tokens: int = 500, temperature: float = 0.2) -> str:
     """
     This function actually calls the OpenAI API
     Models such as gpt-4-32k, gpt-4-1106-preview
     :param json_data:
     :return:
     """
-
-    completion = openai.ChatCompletion.create(
+    print("this ran")
+    completion = client.chat.completions.create(
         model=model_name,
         max_tokens=max_tokens,
         temperature=temperature,
@@ -181,13 +187,24 @@ def run_open_ai_api(json_data, model_name="gpt-4", max_tokens: int = 500, temper
             {"role": "user", "content": f"{json_data['prompt']}"},
         ],
     )
+
+    print(completion.choices[0])
+
+    
+    # response = ollama.chat(model=model_name, messages=[
+    #     {"role": "system", "content": "You are a helpful assistant."},
+    #             {"role": "user", "content": f"{json_data['prompt']}"},
+    # ])
+    # print(response['message']['content'])
         # stream=True
     # partial_message = ""
     # for chunk in completion:
     #     if len(chunk['choices'][0]['delta']) != 0:
     #         partial_message = partial_message + chunk['choices'][0]['delta']['content']
     #         yield partial_message
-    return completion["choices"][0]["message"]["content"]
+    return completion.choices[0].message.content
+
+    # return response['message']['content']
 
 
 
@@ -339,12 +356,12 @@ class GradioChatApp:
         self.wer = load("wer")
 
     def add_text(self, history, text, base_paper_textbox, keyword_textbox, rerank: bool = True, 
-                 num_papers: int = 3, model_name="gpt-4", sort_by="relevance", temperature = 0.2, max_tokens = 300, num_papers_api: int = 20):
+                 num_papers: int = 3, model_name="llama3.1", sort_by="relevance", temperature = 0.2, max_tokens = 300, num_papers_api: int = 20):
         """
         Add text to history
         """
-        if 'OPENAI_API_KEY' not in os.environ:
-            raise gr.Error('Upload your OpenAI API key')
+        # if 'OPENAI_API_KEY' not in os.environ:
+        #     raise gr.Error('Upload your OpenAI API key')
 
         history = history + [(f"User provided abstract: \n {text}", None)]
         # print("All textboxes:", plan_textbox, base_paper_textbox, keyword_textbox)
@@ -359,8 +376,9 @@ class GradioChatApp:
                     # query = "multi document summarization"
                     prompt = get_complete_prompt_for_summarization(self.summarization_prompt, text)
                     json_data = {"prompt": prompt}
+                    print(json_data)
                     query = run_open_ai_api(json_data, model_name=model_name, max_tokens=max_tokens, temperature=temperature)
-                # print(query)
+                print(query)
                 hist_response = f"LLM summarized keyword query to be used for S2 API: \n {query}"
                 papers = find_basis_paper(query, num_papers_api)
         except:
@@ -408,8 +426,8 @@ class GradioChatApp:
         """
         Calls the openai api
         """
-        if 'OPENAI_API_KEY' not in os.environ:
-            raise gr.Error('Upload your OpenAI API key')
+        # if 'OPENAI_API_KEY' not in os.environ:
+        #     raise gr.Error('Upload your OpenAI API key')
 
         # Cache headers, ip address
         # if request:
@@ -430,6 +448,7 @@ class GradioChatApp:
         #     history.pop()
         # print(complete_prompt)
         json_data = {"prompt": complete_prompt}
+        print("I was here")
         response = run_open_ai_api(json_data, model_name=model_name, max_tokens=max_tokens, temperature=temperature)
 
         history[-1][1] = ""
@@ -485,7 +504,7 @@ class GradioChatApp:
 
                     with gr.Accordion("Ranking Parameters", open=False) as parameter_row:
                         # https://platform.openai.com/docs/models/overview
-                        model_name = gr.Dropdown(["gpt-3.5-turbo", "gpt-4", "gpt-4-32k", "gpt-4-1106-preview"], value="gpt-4", interactive=True,  label="Model") # scale=1, min_width=0
+                        model_name = gr.Dropdown(["llama3.1"], value="llama3.1", interactive=True,  label="Model") # scale=1, min_width=0
                         num_papers = gr.Slider(minimum=1, maximum=10, value=4, step=1, interactive=True, label="Cite # papers")
                         sort_by = gr.Dropdown(["Relevance", "Citations", "Year"], value="Relevance", interactive=True,  label="Sort by") # scale=1, min_width=0
                         llm_rerank = gr.Radio(choices=["True", "False"], value="True", interactive=True, label="LLM Re-rank (May override sorting)")
